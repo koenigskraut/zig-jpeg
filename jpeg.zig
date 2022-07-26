@@ -24,7 +24,14 @@ fn withPrefix(prefix: []const u8, a: anytype) [a.len][]const u8 {
     return ret;
 }
 
-pub fn create(b: *std.build.Builder, target: std.zig.CrossTarget, mode: std.builtin.Mode) Library {
+pub fn create(b: *std.build.Builder, target: std.zig.CrossTarget, mode: std.builtin.Mode) !Library {
+    // zig runtime safety checks result in runtime illegal instructions,
+    // no idea how to fix it
+    if (mode == .Debug or mode == .ReleaseSafe) {
+        std.log.err("libjpeg can only be built with -Drelease-fast or -Drelease-small", .{});
+        return error.WrongMode;
+    }
+
     const ret = b.addStaticLibrary("jpeg", null);
     ret.setTarget(target);
     ret.setBuildMode(mode);
